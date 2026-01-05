@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>猫眼电影爬虫 - 数据爬取平台</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700&family=Orbitron:wght@600;800&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+</head>
+
+<body>
+    <!-- Loading Screen -->
+    <div id="preloader">
+        <div class="loader-content">
+            <div class="ink-spinner"></div>
+            <div class="ink-spinner ink-2"></div>
+            <div class="text">LOADING...</div>
+        </div>
+    </div>
+
+    <div class="container">
+        <header class="header">
+            <h1>🎬 猫眼电影爬虫</h1>
+            <p class="subtitle">电影排行数据爬取平台</p>
+        </header>
+
+        <main class="main-content">
+            <!-- 控制面板 -->
+            <section class="control-panel">
+                <div class="card">
+                    <h2>操作面板</h2>
+                    <div class="button-group">
+                        <button id="scrapeBtn" class="btn btn-primary" onclick="startScrape()">
+                            <span class="icon">🕷️</span> 开始爬取数据
+                        </button>
+                        <button id="clearBtn" class="btn btn-secondary" onclick="clearData()">
+                            <span class="icon">🗑️</span> 清空数据
+                        </button>
+                    </div>
+                    <div id="status" class="status-message"></div>
+                </div>
+            </section>
+
+            <!-- 结果显示 -->
+            <section class="results-section">
+                <!-- Top 3 镭射卡片展示 -->
+                <div id="topCards" class="cards-container" style="display: none;">
+                    <h2>🏆 热门榜单 TOP 3</h2>
+                    <div class="cards-wrapper" id="cardsWrapper">
+                        <!-- 卡片将通过JS动态插入 -->
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h2>爬取结果 <span id="countBadge" class="badge">0</span></h2>
+
+                    <!-- 表格显示 -->
+                    <div class="table-wrapper">
+                        <table id="moviesTable" class="movies-table">
+                            <thead>
+                                <tr>
+                                    <th>排名</th>
+                                    <th>电影名称</th>
+                                    <th>评分</th>
+                                    <th>上映时间</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tableBody">
+                                <tr class="empty-row">
+                                    <td colspan="4">暂无数据，请点击"开始爬取数据"</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- JSON格式展示 -->
+                    <div class="json-section">
+                        <h3>JSON格式数据</h3>
+                        <pre id="jsonOutput" class="json-display">[]</pre>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 数据可视化 -->
+            <section class="visualization-section" id="vizSection" style="display: none;">
+                <div class="card">
+                    <h2>📊 数据可视化分析</h2>
+                    
+                    <div class="charts-grid">
+                        <!-- 评分分布图 -->
+                        <div class="chart-container">
+                            <h3>评分分布</h3>
+                            <div id="scoreChart" style="width: 100%; height: 400px;"></div>
+                        </div>
+                        
+                        <!-- 年份分布图 -->
+                        <div class="chart-container">
+                            <h3>上映年份分布</h3>
+                            <div id="yearChart" style="width: 100%; height: 400px;"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- 词云图 -->
+                    <div class="wordcloud-container" style="text-align: center;">
+                        <h3>☁️ 电影名称词云</h3>
+                        <div class="wordcloud-wrapper">
+                            <img id="wordCloudImg" src="" alt="词云图" style="max-width: 100%; display: none; margin: 0 auto; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
+                            <div id="wordCloudLoading" class="loading-text" style="display: none;">生成中...</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 导出面板 -->
+            <section class="export-section">
+                <div class="card">
+                    <h2>数据导出</h2>
+                    <div class="button-group">
+                        <button class="btn btn-export" onclick="exportCSV()">
+                            <span class="icon">📊</span> 导出为 CSV
+                        </button>
+                        <button class="btn btn-export" onclick="exportTXT()">
+                            <span class="icon">📄</span> 导出为 TXT
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 信息面板 -->
+            <section class="info-section">
+                <div class="card">
+                    <h2>关于此脚本</h2>
+                    <div class="info-content">
+                        <p><strong>功能描述：</strong></p>
+                        <ul>
+                            <li>✅ 使用正则表达式（re库）爬取猫眼电影排行数据</li>
+                            <li>✅ 提取电影排名、名称、评分、上映时间等信息</li>
+                            <li>✅ 支持多种格式导出（CSV、TXT）</li>
+                            <li>✅ 完整的错误处理和异常捕获</li>
+                        </ul>
+
+                        <p><strong>主要特性：</strong></p>
+                        <ul>
+                            <li>🔍 使用正则表达式精确匹配HTML内容</li>
+                            <li>🌐 浏览器User-Agent模拟</li>
+                            <li>⏱️ 10秒请求超时设置</li>
+                            <li>💾 数据持久化存储</li>
+                        </ul>
+
+                        <p><strong>技术栈：</strong></p>
+                        <ul>
+                            <li>后端：Python Flask</li>
+                            <li>数据爬取：requests + re正则表达式</li>
+                            <li>前端：HTML5 + CSS3 + Vanilla JavaScript</li>
+                            <li>数据存储：内存存储 + 文件导出</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <footer class="footer">
+            <p>© 2026 猫眼电影爬虫平台 | 由Flask驱动</p>
+        </footer>
+    </div>
+
+    <div id="canvas-container"></div>
+
+    <!-- Three.js Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="{{ url_for('static', filename='three_bg.js') }}"></script>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+
+</html>

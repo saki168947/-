@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DOUBAN // SYSTEM SPEC</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Oswald:wght@500;700&display=swap"
+        rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        :root {
+            /* Softer Dark Palette */
+            --bg-color: #1a0505;
+            --text-color: #e0e0e0;
+            --accent-color: #ff3333;
+            --border-color: rgba(255, 51, 51, 0.2);
+            --font-display: 'Oswald', sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: var(--font-mono);
+            overflow-x: hidden;
+            width: 100vw;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* UTILS */
+        .border-bottom {
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .border-right {
+            border-right: 2px solid var(--border-color);
+        }
+
+        a {
+            color: var(--text-color);
+            text-decoration: none;
+            cursor: pointer;
+            padding: 5px 10px;
+        }
+
+        a:hover {
+            text-decoration: underline;
+            background: var(--text-color);
+            color: var(--bg-color);
+        }
+
+        /* HEADER */
+        header {
+            display: grid;
+            grid-template-columns: 100px 1fr 100px;
+            height: 60px;
+            border-bottom: 2px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background-color: var(--bg-color);
+        }
+
+        @media (max-width: 768px) {
+            header {
+                grid-template-columns: 80px 1fr 60px;
+                font-size: 0.9rem;
+            }
+
+            .nav-links {
+                gap: 1rem;
+                font-size: 0.9rem;
+            }
+
+            h1 {
+                font-size: 3.5rem !important;
+            }
+        }
+
+        @media (max-width: 480px) {
+            header {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto auto auto;
+                height: auto;
+                position: relative;
+            }
+
+            .logo-box,
+            .nav-links {
+                border-right: none;
+                border-bottom: 2px solid var(--border-color);
+                padding: 10px;
+            }
+
+            .nav-links {
+                flex-direction: column;
+                gap: 5px;
+            }
+        }
+
+        .logo-box {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            border-right: 2px solid var(--border-color);
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 2rem;
+            font-family: var(--font-display);
+            font-size: 1.2rem;
+            text-transform: uppercase;
+        }
+
+        /* MAIN CONTENT */
+        main {
+            padding: 4rem 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        h1 {
+            font-family: var(--font-display);
+            font-size: clamp(3rem, 8vw, 6rem);
+            line-height: 0.9;
+            margin-bottom: 4rem;
+            text-transform: uppercase;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 1rem;
+        }
+
+        .spec-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            border-top: 2px solid var(--border-color);
+        }
+
+        @media(min-width: 768px) {
+            .spec-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        .spec-item {
+            border-bottom: 2px solid var(--border-color);
+            padding: 2rem 0;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .spec-label {
+            font-family: var(--font-mono);
+            font-size: 0.9rem;
+            opacity: 0.6;
+            margin-bottom: 0.5rem;
+        }
+
+        .spec-value {
+            font-family: var(--font-display);
+            font-size: 2rem;
+            text-transform: uppercase;
+        }
+
+        .description {
+            font-family: 'Times New Roman', serif;
+            /* Editorial feel */
+            font-size: 1.5rem;
+            line-height: 1.4;
+            margin-top: 4rem;
+            max-width: 800px;
+        }
+
+        .bg-deco {
+            position: fixed;
+            bottom: -5%;
+            right: -5%;
+            font-size: 30vw;
+            opacity: 0.05;
+            font-family: var(--font-display);
+            pointer-events: none;
+            z-index: 0;
+            color: var(--text-color);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="bg-deco">SYS</div>
+
+    <div class="bg-deco">SYS</div>
+
+    <canvas id="bg-canvas"></canvas>
+    <style>
+        #bg-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: -1;
+            opacity: 0.4;
+            pointer-events: none;
+        }
+    </style>
+
+    <header>
+        <div class="logo-box"><a href="/dashboard">DB.CRWL</a></div>
+        <div class="nav-links border-right">
+            <a href="/dashboard">[ TERMINAL ]</a>
+            <a href="/stream">[ DATA_STREAM ]</a>
+            <a href="/about" style="text-decoration: underline;">[ SYSTEM_INFO ]</a>
+        </div>
+        <div class="logo-box">SYS</div>
+    </header>
+
+    <main>
+        <h1>SYSTEM SPECIFICATIONS</h1>
+
+        <div class="spec-grid">
+            <div class="spec-item">
+                <div class="spec-label">CORE_LANGUAGE</div>
+                <div class="spec-value">PYTHON 3.10+</div>
+            </div>
+            <div class="spec-item">
+                <div class="spec-label">FRAMEWORK</div>
+                <div class="spec-value">FLASK MICROSERVICE</div>
+            </div>
+            <div class="spec-item">
+                <div class="spec-label">CRAWLER_ENGINE</div>
+                <div class="spec-value">REQUESTS / BS4</div>
+            </div>
+            <div class="spec-item">
+                <div class="spec-label">ANALYSIS_MODULE</div>
+                <div class="spec-value">JIEBA / WORDCLOUD</div>
+            </div>
+            <div class="spec-item">
+                <div class="spec-label">VISUAL_STYLE</div>
+                <div class="spec-value">BRUTALIST / RED</div>
+            </div>
+            <div class="spec-item">
+                <div class="spec-label">VERSION</div>
+                <div class="spec-value">BUILD 1.0.4</div>
+            </div>
+        </div>
+
+        <div class="description">
+            <p>
+                This Universal Crawler is designed to interface with the Douban public protocol.
+                It utilizes high-velocity request handling to extract movie metadata and user sentiment analysis.
+                The frontend is rendered using a raw, industrial design system emphasizing data visibility and
+                structure.
+            </p>
+        </div>
+    </main>
+    <!-- THREE.JS BACKGROUND ANIMATION -->
+    <script>
+        const canvas = document.querySelector('#bg-canvas');
+        const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.z = 30;
+        camera.position.y = 10;
+        camera.lookAt(0, 0, 0);
+
+        // Particle System
+        const particlesGeometry = new THREE.BufferGeometry();
+        const particlesCount = 2000;
+        const posArray = new Float32Array(particlesCount * 3);
+
+        for (let i = 0; i < particlesCount * 3; i++) {
+            posArray[i] = (Math.random() - 0.5) * 100;
+        }
+
+        particlesGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+
+        const material = new THREE.PointsMaterial({
+            size: 0.15,
+            color: 0xff3333, // Match accent
+            transparent: true,
+            opacity: 0.8,
+        });
+
+        const particlesMesh = new THREE.Points(particlesGeometry, material);
+        scene.add(particlesMesh);
+
+        // Wave Animation
+        let mouseX = 0;
+        let mouseY = 0;
+
+        document.addEventListener('mousemove', (event) => {
+            mouseX = event.clientX;
+            mouseY = event.clientY;
+        });
+
+        const clock = new THREE.Clock();
+
+        function animate() {
+            const elapsedTime = clock.getElapsedTime();
+
+            // Rotate entire system slightly
+            particlesMesh.rotation.y = elapsedTime * 0.05;
+            particlesMesh.rotation.x = -mouseY * 0.0001;
+            particlesMesh.rotation.y += mouseX * 0.0001;
+
+            // Wave effect
+            const positions = particlesMesh.geometry.attributes.position.array;
+            for (let i = 0; i < particlesCount; i++) {
+                const i3 = i * 3;
+                const x = particlesGeometry.attributes.position.array[i3];
+                // Simple wave based on x position and time
+                particlesGeometry.attributes.position.array[i3 + 1] = Math.sin(elapsedTime + x) * 2;
+            }
+            particlesMesh.geometry.attributes.position.needsUpdate = true;
+
+            renderer.render(scene, camera);
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+
+        // Responsive Resizing
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+
+</html>

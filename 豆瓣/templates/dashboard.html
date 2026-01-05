@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DOUBAN // UNIVERSAL CRAWLER</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Oswald:wght@500;700&display=swap"
+        rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        :root {
+            /* Softer Dark Palette */
+            --bg-color: #1a0505;
+            --text-color: #e0e0e0;
+            --accent-color: #ff3333;
+            --border-color: rgba(255, 51, 51, 0.2);
+            /* Faded frames */
+            --font-display: 'Oswald', sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: var(--font-mono);
+            overflow-x: hidden;
+            width: 100vw;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* UTILS */
+        .border-bottom {
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .border-right {
+            border-right: 2px solid var(--border-color);
+        }
+
+        .flex {
+            display: flex;
+        }
+
+        .grid {
+            display: grid;
+        }
+
+        .uppercase {
+            text-transform: uppercase;
+        }
+
+        .w-full {
+            width: 100%;
+        }
+
+        .h-full {
+            height: 100%;
+        }
+
+        /* HEADER */
+        header {
+            display: grid;
+            grid-template-columns: 100px 1fr 100px;
+            height: 60px;
+            border-bottom: 2px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background-color: var(--bg-color);
+        }
+
+        @media (max-width: 768px) {
+            header {
+                grid-template-columns: 80px 1fr 60px;
+                font-size: 0.9rem;
+            }
+
+            .nav-links {
+                gap: 1rem;
+                font-size: 0.9rem;
+            }
+
+            h1 {
+                font-size: 3.5rem !important;
+                /* Force smaller on mobile */
+            }
+        }
+
+        @media (max-width: 480px) {
+            header {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto auto auto;
+                height: auto;
+                position: relative;
+            }
+
+            .logo-box,
+            .nav-links {
+                border-right: none;
+                border-bottom: 2px solid var(--border-color);
+                padding: 10px;
+            }
+
+            .nav-links {
+                flex-direction: column;
+                gap: 5px;
+            }
+        }
+
+        .logo-box {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            border-right: 2px solid var(--border-color);
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 2rem;
+            font-family: var(--font-display);
+            font-size: 1.2rem;
+            text-transform: uppercase;
+        }
+
+        a {
+            color: var(--text-color);
+            text-decoration: none;
+            cursor: pointer;
+            padding: 5px 10px;
+        }
+
+        a:hover {
+            text-decoration: underline;
+            background: var(--text-color);
+            color: var(--bg-color);
+        }
+
+        .scrolling-text {
+            animation: scroll 10s linear infinite;
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
+        }
+
+        @keyframes scroll {
+            0% {
+                transform: translateX(100%);
+            }
+
+            100% {
+                transform: translateX(-100%);
+            }
+        }
+
+        /* MAIN LAYOUT */
+        main {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            padding: 2rem;
+            max-width: 1600px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        h1 {
+            font-family: var(--font-display);
+            font-size: clamp(3rem, 10vw, 8rem);
+            line-height: 0.9;
+            margin-bottom: 2rem;
+            text-transform: uppercase;
+            letter-spacing: -2px;
+        }
+
+        .glitch-text {
+            position: relative;
+        }
+
+        .glitch-text::after {
+            content: "UNIVERSAL_CRAWLER";
+            position: absolute;
+            left: 2px;
+            top: 0;
+            color: var(--text-color);
+            background: var(--bg-color);
+            overflow: hidden;
+            clip-path: polygon(0 0, 100% 0, 100% 45%, 0 45%);
+            transform: translate(-2px);
+            animation: glitch 2s infinite linear alternate-reverse;
+        }
+
+        @keyframes glitch {
+            0% {
+                clip-path: inset(40% 0 61% 0);
+                transform: translate(-2px, 2px);
+            }
+
+            20% {
+                clip-path: inset(92% 0 1% 0);
+                transform: translate(2px, -2px);
+            }
+
+            40% {
+                clip-path: inset(43% 0 1% 0);
+                transform: translate(-2px, 2px);
+            }
+
+            60% {
+                clip-path: inset(25% 0 58% 0);
+                transform: translate(2px, -2px);
+            }
+
+            80% {
+                clip-path: inset(54% 0 7% 0);
+                transform: translate(-2px, 2px);
+            }
+
+            100% {
+                clip-path: inset(58% 0 43% 0);
+                transform: translate(2px, -2px);
+            }
+        }
+
+        /* FORM AREA */
+        .crawler-interface {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+            border-top: 2px solid var(--border-color);
+            padding-top: 20px;
+        }
+
+        @media (min-width: 768px) {
+            .crawler-interface {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        .io-panel {
+            border: 2px solid var(--border-color);
+            padding: 1.5rem;
+            background: rgba(22, 0, 0, 0.05);
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        label {
+            font-family: var(--font-display);
+            font-size: 1.5rem;
+            text-transform: uppercase;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            background: transparent;
+            border: none;
+            border-bottom: 2px solid var(--border-color);
+            font-family: var(--font-mono);
+            font-size: 1.2rem;
+            padding: 10px 0;
+            color: var(--text-color);
+            outline: none;
+        }
+
+        input[type="text"]::placeholder {
+            color: rgba(22, 0, 0, 0.4);
+        }
+
+        button.btn-execute {
+            background: var(--text-color);
+            color: var(--bg-color);
+            border: none;
+            padding: 1.5rem;
+            font-family: var(--font-display);
+            font-size: 1.5rem;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: transform 0.1s, box-shadow 0.1s;
+        }
+
+        button.btn-execute:hover {
+            transform: translate(-3px, -3px);
+            box-shadow: 3px 3px 0px rgba(0, 0, 0, 0.2);
+        }
+
+        button.btn-execute:active {
+            transform: translate(0, 0);
+            box-shadow: none;
+        }
+
+        /* OUTPUT TERMINAL */
+        .terminal {
+            font-family: var(--font-mono);
+            font-size: 0.9rem;
+            line-height: 1.4;
+            min-height: 300px;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .terminal-line {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 5px;
+        }
+
+        .line-prefix {
+            color: rgba(22, 0, 0, 0.5);
+            user-select: none;
+        }
+
+        .status-ok {
+            color: var(--text-color);
+            font-weight: bold;
+        }
+
+        .status-err {
+            color: #fff;
+            background: #000;
+            padding: 0 4px;
+        }
+
+        /* DATA DISPLAY */
+        .data-grid {
+            display: grid;
+            grid-template-columns: 100px 1fr;
+            gap: 10px;
+            margin-top: 10px;
+            border: 1px dashed var(--border-color);
+            padding: 10px;
+        }
+
+        @media (max-width: 480px) {
+            .data-grid {
+                grid-template-columns: 1fr;
+                gap: 5px;
+            }
+
+            .data-label {
+                background: rgba(0, 0, 0, 0.1);
+                padding: 2px 5px;
+            }
+        }
+
+        .data-label {
+            font-weight: bold;
+            opacity: 0.7;
+        }
+
+        .wordcloud-container {
+            margin-top: 20px;
+            border: 2px solid var(--border-color);
+        }
+
+        .wordcloud-container img {
+            width: 100%;
+            display: block;
+            mix-blend-mode: screen;
+            /* Blends black bg into dark, keeps lights */
+            /* filter: grayscale(100%) contrast(150%); Removed to keep colors */
+        }
+
+        /* LOADER */
+        .loader {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--text-color);
+            border-bottom-color: transparent;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        /* DECORATION */
+        .bg-deco {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 40vw;
+            opacity: 0.03;
+            font-family: var(--font-display);
+            pointer-events: none;
+            user-select: none;
+            z-index: 0;
+            white-space: nowrap;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="bg-deco">DATA</div>
+    <canvas id="bg-canvas"></canvas>
+
+    <style>
+        #bg-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: -1;
+            opacity: 0.4;
+            /* Subtle background */
+            pointer-events: none;
+        }
+    </style>
+
+    <header>
+        <div class="logo-box"><a href="/dashboard">DB.CRWL</a></div>
+        <div class="nav-links border-right">
+            <a href="/dashboard" style="text-decoration: underline;">[ TERMINAL ]</a>
+            <a href="/stream">[ DATA_STREAM ]</a>
+            <a href="/about">[ SYSTEM_INFO ]</a>
+        </div>
+        <div class="logo-box">V1.0</div>
+    </header>
+
+    <main>
+        <div>
+            <h1>DOUBAN <br><span class="glitch-text">UNIVERSAL_CRAWLER</span></h1>
+        </div>
+
+        <div class="crawler-interface">
+            <!-- INPUT PANEL -->
+            <div class="io-panel">
+                <div>
+                    <label for="target-url">Target URL</label>
+                    <input type="text" id="target-url" placeholder="https://movie.douban.com/subject/..."
+                        value="https://movie.douban.com/subject/34874432/">
+                </div>
+                <div class="flex" style="gap: 10px;">
+                    <div style="flex: 1; font-size: 0.8rem; opacity: 0.7;">
+                        SUPPORTED TYPES:<br>
+                        [x] MOVIE<br>
+                        [ ] BOOK (EXP)<br>
+                        [ ] MUSIC (EXP)
+                    </div>
+                </div>
+                <button class="btn-execute" id="btn-run">INITIATE_SEQUENCE</button>
+            </div>
+
+            <!-- OUTPUT PANEL -->
+            <div class="io-panel terminal" id="terminal-output">
+                <div class="terminal-line">
+                    <span class="line-prefix">001</span>
+                    <span>System initialized.</span>
+                </div>
+                <div class="terminal-line">
+                    <span class="line-prefix">002</span>
+                    <span>Awaiting target input...</span>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const btnRun = document.getElementById('btn-run');
+        const inputUrl = document.getElementById('target-url');
+        const terminal = document.getElementById('terminal-output');
+        let lineCount = 3;
+
+        function log(msg, type = 'info') {
+            const line = document.createElement('div');
+            line.className = 'terminal-line';
+
+            const prefix = document.createElement('span');
+            prefix.className = 'line-prefix';
+            prefix.textContent = String(lineCount++).padStart(3, '0');
+
+            const content = document.createElement('span');
+            content.innerHTML = msg; // Allow HTML for simplicity
+            if (type === 'error') content.className = 'status-err';
+            if (type === 'success') content.className = 'status-ok';
+
+            line.appendChild(prefix);
+            line.appendChild(content);
+            terminal.appendChild(line);
+            terminal.scrollTop = terminal.scrollHeight;
+        }
+
+        btnRun.addEventListener('click', async () => {
+            const url = inputUrl.value.trim();
+            if (!url) {
+                log('ERROR: TARGET URL EMPTY', 'error');
+                return;
+            }
+
+            btnRun.disabled = true;
+            btnRun.innerHTML = '<span class="loader"></span> PROCESSING';
+            log(`INITIATING CONNECTION TO: ${url}...`);
+
+            try {
+                const response = await fetch('/crawl', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url: url })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    log('CONNECTION ESTABLISHED. DATA RECEIVED.', 'success');
+                    log('PARSING ENTITY DATA...');
+
+                    // Display details
+                    const infoHtml = `
+                        <div class="data-grid">
+                            <div class="data-label">TITLE</div>
+                            <div>${data.data.title}</div>
+                            <div class="data-label">RATING</div>
+                            <div>${data.data.rating}</div>
+                            <div class="data-label">COMMENTS</div>
+                            <div>${data.data.comments_count} ENTRIES</div>
+                             <div class="data-label">SUMMARY</div>
+                            <div style="max-height: 100px; overflow-y: auto;">${data.data.intro.substring(0, 100)}...</div>
+                        </div>
+                    `;
+                    log(infoHtml);
+
+                    if (data.wordcloud) {
+                        log('GENERATING VISUAL MAP...');
+                        const img = document.createElement('div');
+                        img.className = 'wordcloud-container';
+                        img.innerHTML = `<img src="data:image/png;base64,${data.wordcloud}" alt="WordCloud">`;
+                        terminal.appendChild(img);
+                        terminal.scrollTop = terminal.scrollHeight;
+                    }
+
+                    // Display Statistics
+                    if (data.rating_stats) {
+                        let ratingHtml = '<div class="data-grid"><div class="data-label" style="grid-column: 1 / -1;">RATING DISTRIBUTION</div>';
+                        for (const [key, value] of Object.entries(data.rating_stats)) {
+                            ratingHtml += `<div>${key}</div><div>${value}</div>`;
+                        }
+                        ratingHtml += '</div>';
+                        log(ratingHtml);
+                    }
+
+                    if (data.word_stats) {
+                        let wordHtml = '<div class="data-grid"><div class="data-label" style="grid-column: 1 / -1;">TOP KEYWORDS</div>';
+                        data.word_stats.forEach(([word, count]) => {
+                            wordHtml += `<div>${word}</div><div>${count}</div>`;
+                        });
+                        wordHtml += '</div>';
+                        log(wordHtml);
+                    }
+
+                    log('SEQUENCE COMPLETE.', 'success');
+
+                } else {
+                    log(`ERROR: ${data.message}`, 'error');
+                }
+
+            } catch (err) {
+                log(`SYSTEM FAILURE: ${err.message}`, 'error');
+            } finally {
+                btnRun.disabled = false;
+                btnRun.textContent = 'INITIATE_SEQUENCE';
+            }
+        });
+    </script>
+
+    <!-- THREE.JS BACKGROUND ANIMATION -->
+    <script>
+        const canvas = document.querySelector('#bg-canvas');
+        const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.z = 30;
+        camera.position.y = 10;
+        camera.lookAt(0, 0, 0);
+
+        // Particle System
+        const particlesGeometry = new THREE.BufferGeometry();
+        const particlesCount = 2000;
+        const posArray = new Float32Array(particlesCount * 3);
+
+        for (let i = 0; i < particlesCount * 3; i++) {
+            posArray[i] = (Math.random() - 0.5) * 100;
+        }
+
+        particlesGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+
+        const material = new THREE.PointsMaterial({
+            size: 0.15,
+            color: 0xff3333, // Match accent
+            transparent: true,
+            opacity: 0.8,
+        });
+
+        const particlesMesh = new THREE.Points(particlesGeometry, material);
+        scene.add(particlesMesh);
+
+        // Wave Animation
+        let mouseX = 0;
+        let mouseY = 0;
+
+        document.addEventListener('mousemove', (event) => {
+            mouseX = event.clientX;
+            mouseY = event.clientY;
+        });
+
+        const clock = new THREE.Clock();
+
+        function animate() {
+            const elapsedTime = clock.getElapsedTime();
+
+            // Rotate entire system slightly
+            particlesMesh.rotation.y = elapsedTime * 0.05;
+            particlesMesh.rotation.x = -mouseY * 0.0001;
+            particlesMesh.rotation.y += mouseX * 0.0001;
+
+            // Wave effect
+            const positions = particlesMesh.geometry.attributes.position.array;
+            for (let i = 0; i < particlesCount; i++) {
+                const i3 = i * 3;
+                const x = particlesGeometry.attributes.position.array[i3];
+                // Simple wave based on x position and time
+                particlesGeometry.attributes.position.array[i3 + 1] = Math.sin(elapsedTime + x) * 2;
+            }
+            particlesMesh.geometry.attributes.position.needsUpdate = true;
+
+            renderer.render(scene, camera);
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+
+        // Responsive Resizing
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+
+</html>
