@@ -1,4 +1,4 @@
-from flask import Flask, render_template, jsonify, send_file
+from flask import Flask, render_template, jsonify, send_file, request, Response
 import re
 import requests
 import csv
@@ -267,5 +267,90 @@ def get_wordcloud():
     except Exception as e:
         return jsonify({'success': False, 'message': f'生成词云失败: {str(e)}'}), 500
 
+@app.route('/api/image_proxy')
+def image_proxy():
+    """
+    代理图片请求，解决跨域问题
+    """
+    img_url = request.args.get('url')
+    if not img_url:
+        return "No URL provided", 400
+    
+    try:
+        # 伪装 Header
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+            'Referer': 'https://maoyan.com/'
+        }
+        resp = requests.get(img_url, headers=headers, stream=True, timeout=5)
+        
+        excluded_headers = ['content-encoding', 'content-length', 'transfer-encoding', 'connection']
+        headers = [(name, value) for (name, value) in resp.raw.headers.items()
+                   if name.lower() not in excluded_headers]
+                   
+        return Response(resp.content, resp.status_code, headers)
+    except Exception as e:
+        return f"Image Proxy Error: {e}", 500
+
+@app.route('/gallery')
+def gallery():
+    """
+    3D 影廊页面，展示前10名电影
+    """
+    global movies_data
+    top_10 = []
+
+    # 1. 尝试使用已有数据
+    if movies_data:
+        top_10 = movies_data[:10]
+        print(f"Gallery使用现有数据: {len(top_10)}条")
+
+    # 2. 如果没有数据，尝试爬取
+    if not top_10:
+        print("Gallery数据为空，尝试重新爬取...")
+        scrape_maoyan_movies()
+        if movies_data:
+            top_10 = movies_data[:10]
+            print(f"Gallery重新爬取成功: {len(top_10)}条")
+    
+    # 3. 如果还是没有数据（爬取失败），使用保底数据
+    if not top_10:
+        print("Gallery爬取失败，使用模拟数据")
+        top_10 = [
+            {'电影名称': "数据加载失败", '评分': "0.0", '图片': ''},
+            {'电影名称': "请检查网络", '评分': "0.0", '图片': ''},
+            {'电影名称': "或者是反爬虫", '评分': "0.0", '图片': ''},
+            {'电影名称': "限制了访问", '评分': "0.0", '图片': ''},
+            {'电影名称': "抓娃娃", '评分': "9.5", '图片': 'https://p0.pipi.cn/mmdb/25bfd6486161947b7df0371a361e6378e9f5e.jpg?imageView2/1/w/128/h/180'},
+            {'电影名称': "默杀", '评分': "9.4", '图片': 'https://p0.pipi.cn/mmdb/25bfd6423984045f280145f617482f3c75468.jpg?imageView2/1/w/128/h/180'},
+            {'电影名称': "云边有个小卖部", '评分': "8.9", '图片': 'https://p0.pipi.cn/mmdb/25bfd620579e000787e9c9049980644368940.jpg?imageView2/1/w/128/h/180'},
+            {'电影名称': "头脑特工队2", '评分': "9.6", '图片': 'https://p0.pipi.cn/mmdb/25bfd6423988647b7dfb325492482f3c75468.jpg?imageView2/1/w/128/h/180'},
+            {'电影名称': "死侍与金刚狼", '评分': "9.0", '图片': 'https://p0.pipi.cn/mmdb/25bfd64861623947b7df0380ad1e6378e9f5e.jpg?imageView2/1/w/128/h/180'},
+            {'电影名称': "解密", '评分': "8.8", '图片': 'https://p0.pipi.cn/mmdb/25bfd64239857947b7dfb30740482f3c75468.jpg?imageView2/1/w/128/h/180'}
+        ]
+    
+    # 格式化数据以适应前端模板
+    formatted_movies = []
+    # 定义一组颜色循环使用
+    colors = ["#ff5722", "#4caf50", "#2196f3", "#9c27b0", "#ffc107", 
+              "#607d8b", "#795548", "#e91e63", "#3f51b5", "#00bcd4"]
+              
+    for i, movie in enumerate(top_10):
+        # 处理图片链接，走本地代理
+        raw_img = movie.get('图片', '') or movie.get('img', '')
+        if raw_img and not raw_img.startswith('http'):
+             # 这种情况下可能是相对路径，或者就是没有
+             pass 
+
+        formatted_movies.append({
+            'id': i + 1,
+            'title': movie.get('电影名称', '未知') or movie.get('nm', '未知'),
+            'score': movie.get('评分', '0.0') or movie.get('sc', '0.0'),
+            'color': colors[i % len(colors)],
+            'image': raw_img
+        })
+        
+    return render_template('gallery.html', movies=formatted_movies)
+
 if __name__ == '__main__':
-    app.run(debug=False, host='127.0.0.1', port=5000)
+    app.run(debug=True, host='127.0.0.1', port=5000)
